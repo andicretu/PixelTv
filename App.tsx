@@ -1,118 +1,609 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
-import React from 'react';
-import type {PropsWithChildren} from 'react';
+import React, {useState} from 'react';
+import logoImage from './assets/images/logo.png';
 import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
   View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
+  //Dimensions,
+  Image,
+  Linking,
+  StatusBar,
+  RefreshControl,
+  ListRenderItem,
 } from 'react-native';
+import {WebView} from 'react-native-webview';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+//const {width: screenWidth} = Dimensions.get('window');
 
-type SectionProps = PropsWithChildren<{
+// Type definitions
+interface Banner {
+  image: string;
+  link: string;
+}
+
+interface Video {
+  videoId: string;
   title: string;
-}>;
+  category: string;
+  description: string;
+  views: string;
+  date: string;
+  banner?: Banner | null;
+}
 
-function Section({children, title}: SectionProps): JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
+type Category =
+  | 'Gaming'
+  | 'Film og Serier'
+  | 'Tech og Gadgets'
+  | 'Programmer'
+  | 'Nordisk Videos';
+
+interface HeaderTabsProps {
+  selectedCategory: Category;
+  onCategorySelect: (category: Category) => void;
+}
+
+interface VideoBlockProps {
+  video: Video;
+  isLiked: boolean;
+  onToggleLike: () => void;
+}
+
+interface ScrollableVideoFeedProps {
+  videos: Video[];
+  onRefresh: () => void;
+  refreshing: boolean;
+  likedVideos: string[];
+  toggleLike: (videoId: string) => void;
+}
+
+// Mock data with proper typing
+const mockVideos: Video[] = [
+  {
+    videoId: '76979871',
+    title:
+      'Aldrig har så mange løbet gennem Danmark - Globalt spilhit sætter Danmark på verdenskortet',
+    category: 'Gaming',
+    description:
+      'Interview med udviklere bag det globale gaming hit der har sat Danmark på verdenskortet. Oplev historien bag succesen og fremtidsplanerne for dansk spiludvikling.',
+    views: '12.5K',
+    date: '24. maj, 2025',
+    banner: {
+      image:
+        'https://via.placeholder.com/350x80/4CAF50/white?text=Nordic+Game+Conference',
+      link: 'https://nordicgame.com',
+    },
+  },
+  {
+    videoId: '347119375',
+    title:
+      'Interview | Peter Molyneux fortæller alt: Fable, Fable og Godus Venner',
+    category: 'Gaming',
+    description:
+      'Eksklusivt interview med den legendariske spiludvikler Peter Molyneux om hans karriere, Fable-serien og fremtidige projekter.',
+    views: '8.2K',
+    date: '22. maj, 2025',
+    banner: {
+      image:
+        'https://via.placeholder.com/350x80/2196F3/white?text=Game+Developer+Stories',
+      link: 'https://gamedev.example.com',
+    },
+  },
+  {
+    videoId: '449787858',
+    title: 'Overwatch forandrede hendes liv - Matilda Smedius | Interview',
+    category: 'Gaming',
+    description:
+      'Mød Matilda Smedius og hør hvordan Overwatch ændrede hendes liv og karriere inden for esports. En inspirerende historie om passion og dedikation.',
+    views: '15.7K',
+    date: '20. maj, 2025',
+    banner: null,
+  },
+    {
+      videoId: '347119375',
+      title: 'Nordic Culture Documentary - Traditioner og moderne liv',
+      category: 'Film og Serier',
+      description:
+        'Udforsk den rige kulturelle arv i de nordiske lande gennem fantastiske visuelle oplevelser og personlige historier.',
+      views: '7.9K',
+      date: '12. maj, 2025',
+      banner: null,
+    },
+  {
+    videoId: '789123456',
+    title: 'Danish Film Festival 2025 - Highlights',
+    category: 'Film og Serier',
+    description:
+      'De bedste øjeblikke fra årets danske filmfestival med interviews, behind-the-scenes indhold og sneak peeks af kommende produktioner.',
+    views: '6.8K',
+    date: '18. maj, 2025',
+    banner: {
+      image:
+        'https://via.placeholder.com/350x80/FF9800/white?text=Danish+Film+Institute',
+      link: 'https://dfi.dk',
+    },
+  },
+  {
+    videoId: '38395525',
+    title: 'Tech Review: Årets bedste gadgets',
+    category: 'Tech og Gadgets',
+    description:
+      'Gennemgang af de mest innovative tech gadgets der har ramt det nordiske marked i år. Fra smartphones til smart home devices.',
+    views: '9.4K',
+    date: '16. maj, 2025',
+    banner: null,
+  },
+  {
+    videoId: '38395525',
+    title: 'React Native Development Tutorial - Del 1',
+    category: 'Programmer',
+    description:
+      'Lær at bygge mobile apps med React Native fra bunden. Denne serie er perfekt til begyndere og erfarne udviklere der vil udvide deres skillset.',
+    views: '11.2K',
+    date: '14. maj, 2025',
+    banner: {
+      image:
+        'https://via.placeholder.com/350x80/9C27B0/white?text=Learn+Programming',
+      link: 'https://programming.example.com',
+    },
+  },
+  {
+    videoId: '347119375',
+    title: 'Nordic Culture Documentary - Traditioner og moderne liv',
+    category: 'Nordisk Videos',
+    description:
+      'Udforsk den rige kulturelle arv i de nordiske lande gennem fantastiske visuelle oplevelser og personlige historier.',
+    views: '7.9K',
+    date: '12. maj, 2025',
+    banner: null,
+  },
+];
+
+const categories: Category[] = [
+  'Gaming',
+  'Film og Serier',
+  'Tech og Gadgets',
+  'Programmer',
+  'Nordisk Videos',
+];
+
+// Enhanced Header with better styling
+const HeaderTabs: React.FC<HeaderTabsProps> = ({
+  selectedCategory,
+  onCategorySelect,
+}) => {
+  const renderTabItem: ListRenderItem<Category> = ({item}) => (
+    <TouchableOpacity
+      style={[styles.tab, selectedCategory === item && styles.activeTab]}
+      onPress={() => onCategorySelect(item)}
+      activeOpacity={0.8}>
       <Text
         style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
+          styles.tabText,
+          selectedCategory === item && styles.activeTabText,
         ]}>
-        {title}
+        {item}
       </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
+    </TouchableOpacity>
+  );
+
+  return (
+    <View style={styles.headerContainer}>
+      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+      {/* Logo Section */}
+      <View style={styles.logoContainer}>
+        <Image source={logoImage} style={styles.logoImage} resizeMode="contain"/>
+      </View>
+
+      {/* Category Tabs */}
+      <FlatList
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        data={categories}
+        keyExtractor={(item: Category) => item}
+        contentContainerStyle={styles.tabsContainer}
+        renderItem={renderTabItem}
+      />
+    </View>
+  );
+};
+
+// Enhanced Video Block with better metadata display
+const VideoBlock: React.FC<VideoBlockProps> = ({video, isLiked, onToggleLike}) => {
+  const vimeoUrl: string = `https://player.vimeo.com/video/${video.videoId}?autoplay=0&muted=1&controls=1&playsinline=1&title=0&byline=0&portrait=0`;
+
+  const handleBannerPress = async (): Promise<void> => {
+    if (video.banner?.link) {
+      try {
+        await Linking.openURL(video.banner.link);
+      } catch (error) {
+        console.error('Failed to open URL:', error);
+      }
+    }
+  };
+
+  const renderLoadingComponent = (): JSX.Element => (
+    <View style={styles.loadingContainer}>
+      <View style={styles.loadingSpinner} />
+      <Text style={styles.loadingText}>Loading video...</Text>
+    </View>
+  );
+
+  return (
+    <View style={styles.videoBlock}>
+      {/* Vimeo Player */}
+      <View style={styles.playerContainer}>
+        <WebView
+          source={{uri: vimeoUrl}}
+          style={styles.webView}
+          allowsFullscreenVideo={true}
+          mediaPlaybackRequiresUserAction={false}
+          javaScriptEnabled={true}
+          domStorageEnabled={true}
+          startInLoadingState={true}
+          renderLoading={renderLoadingComponent}
+        />
+      </View>
+
+      {/* Video Information */}
+      <View style={styles.contentContainer}>
+        {/* Title and Category */}
+        <View style={styles.titleContainer}>
+          <Text style={styles.videoTitle} numberOfLines={2}>
+            {video.title}
+          </Text>
+          <View style={styles.categoryBadge}>
+            <Text style={styles.categoryText}>{video.category}</Text>
+          </View>
+        </View>
+
+        {/* Metadata */}
+        <View style={styles.metadataContainer}>
+          <Text style={styles.metadataText}>{video.views} visninger</Text>
+          <Text style={styles.metadataDot}>•</Text>
+          <Text style={styles.metadataText}>{video.date}</Text>
+        </View>
+
+        {/* Description */}
+        <Text style={styles.videoDescription} numberOfLines={3}>
+          {video.description}
+        </Text>
+
+        {/* Like Button */}
+        <TouchableOpacity
+          style={styles.likeButton}
+          onPress={onToggleLike}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.likeButtonText, isLiked && styles.liked]}>
+            {isLiked ? '♥ Liked' : '♡ Like'}
+          </Text>
+        </TouchableOpacity>
+
+        {/* Optional Banner */}
+        {video.banner && (
+          <TouchableOpacity
+            style={styles.bannerContainer}
+            onPress={handleBannerPress}
+            activeOpacity={0.9}>
+            <Image
+              source={{uri: video.banner.image}}
+              style={styles.bannerImage}
+              resizeMode="cover"
+            />
+            <View style={styles.bannerOverlay}>
+              <Text style={styles.bannerText}>Sponsored Content</Text>
+            </View>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+};
+
+// Enhanced Video Feed with pull-to-refresh
+const ScrollableVideoFeed: React.FC<ScrollableVideoFeedProps> = ({
+  videos,
+  onRefresh,
+  refreshing,
+  likedVideos,
+  toggleLike,
+}) => {
+  const renderEmptyState = (): JSX.Element => (
+    <View style={styles.emptyContainer}>
+      <Text style={styles.emptyTitle}>Ingen videoer fundet</Text>
+      <Text style={styles.emptyDescription}>
+        Prøv at vælge en anden kategori eller kom tilbage senere
       </Text>
     </View>
   );
-}
 
-function App(): JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  const renderVideoItem: ListRenderItem<Video> = ({item}) => (
+    <VideoBlock
+    video={item}
+    isLiked={likedVideos.includes(item.videoId)}
+    onToggleLike={() => toggleLike(item.videoId)}
+    />
+  );
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  return (
+    <FlatList<Video>
+      data={videos}
+      keyExtractor={(item: Video) => item.videoId}
+      renderItem={renderVideoItem}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={[
+        styles.feedContainer,
+        videos.length === 0 && styles.emptyFeedContainer,
+      ]}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor="#4CAF50"
+          colors={['#4CAF50']}
+        />
+      }
+      ListEmptyComponent={renderEmptyState}
+      removeClippedSubviews={true}
+      maxToRenderPerBatch={3}
+      windowSize={5}
+    />
+  );
+};
+
+// Main App Component with enhanced state management
+const App: React.FC = () => {
+
+  const [likedVideos, setLikedVideos] = useState<string[]>([]);
+
+  const toggleLike = (videoId: string): void => {
+      setLikedVideos(prev =>
+          prev.includes(videoId)
+              ? prev.filter(id => id !== videoId)
+              : [...prev, videoId]
+      );
+  };
+
+  const [selectedCategory, setSelectedCategory] = useState<Category>('Gaming');
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+
+  const filteredVideos: Video[] = mockVideos.filter(
+    (video: Video) => video.category === selectedCategory,
+  );
+
+  const handleRefresh = (): void => {
+    setRefreshing(true);
+    // Simulate API call
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1500);
+  };
+
+  const handleCategorySelect = (category: Category): void => {
+    setSelectedCategory(category);
   };
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
+    <SafeAreaView style={styles.container}>
+      <HeaderTabs
+        selectedCategory={selectedCategory}
+        onCategorySelect={handleCategorySelect}
       />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
+      <ScrollableVideoFeed
+        videos={filteredVideos}
+        onRefresh={handleRefresh}
+        refreshing={refreshing}
+        likedVideos={likedVideos}
+        toggleLike={toggleLike}
+      />
     </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  container: {
+    flex: 1,
+    backgroundColor: '#000000',
   },
-  sectionTitle: {
-    fontSize: 24,
+  headerContainer: {
+    backgroundColor: '#111111',
+    borderBottomWidth: 1,
+    borderBottomColor: '#333333',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+  },
+  logoImage: {
+      width: 180,
+      height: 50,
+      marginBottom: 10,
+  },
+  tabsContainer: {
+    paddingHorizontal: 15,
+    paddingBottom: 20,
+  },
+  tab: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    marginHorizontal: 6,
+    borderRadius: 25,
+    backgroundColor: '#2a2a2a',
+    borderWidth: 1,
+    borderColor: '#444444',
+  },
+  activeTab: {
+    backgroundColor: '#4CAF50',
+    borderColor: '#4CAF50',
+  },
+  tabText: {
+    color: '#cccccc',
+    fontSize: 14,
     fontWeight: '600',
   },
-  sectionDescription: {
-    marginTop: 8,
+  activeTabText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+  },
+  feedContainer: {
+    paddingBottom: 30,
+  },
+  emptyFeedContainer: {
+    flexGrow: 1,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  emptyDescription: {
+    fontSize: 16,
+    color: '#888888',
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  videoBlock: {
+    marginVertical: 15,
+    marginHorizontal: 20,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    overflow: 'hidden',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  playerContainer: {
+    height: 220,
+    backgroundColor: '#000000',
+    position: 'relative',
+  },
+  webView: {
+    flex: 1,
+  },
+  loadingContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000000',
+  },
+  loadingSpinner: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: '#333333',
+    borderTopColor: '#4CAF50',
+    marginBottom: 10,
+  },
+  loadingText: {
+    color: '#888888',
+    fontSize: 14,
+  },
+  contentContainer: {
+    padding: 20,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 10,
+  },
+  videoTitle: {
+    flex: 1,
     fontSize: 18,
-    fontWeight: '400',
+    fontWeight: 'bold',
+    color: '#ffffff',
+    lineHeight: 24,
+    marginRight: 10,
   },
-  highlight: {
-    fontWeight: '700',
+  categoryBadge: {
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
+  categoryText: {
+    color: '#000000',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  metadataContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  metadataText: {
+    color: '#888888',
+    fontSize: 13,
+  },
+  metadataDot: {
+    color: '#888888',
+    fontSize: 13,
+    marginHorizontal: 8,
+  },
+  videoDescription: {
+    fontSize: 15,
+    color: '#cccccc',
+    lineHeight: 22,
+    marginBottom: 15,
+  },
+  bannerContainer: {
+    borderRadius: 8,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  bannerImage: {
+    width: '100%',
+    height: 80,
+  },
+  bannerOverlay: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  bannerText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  likeButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#ffffff', // ← this ensures the default text and symbol are white
+  },
+  liked: {
+    color: '#ff4444',
+  },
+
 });
 
 export default App;
+
