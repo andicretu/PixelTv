@@ -1,5 +1,9 @@
 import React, {useState} from 'react';
 import logoImage from './assets/images/logo.png';
+import plutoTv from './assets/images/PlutoTv.png';
+import lenovo from './assets/images/lenovo.png';
+import comicon from './assets/images/comicon.png';
+
 import {
   View,
   Text,
@@ -20,7 +24,7 @@ import {WebView} from 'react-native-webview';
 
 // Type definitions
 interface Banner {
-  image: string;
+  image: number;
   link: string;
 }
 
@@ -63,81 +67,93 @@ interface ScrollableVideoFeedProps {
 // Mock data with proper typing
 const mockVideos: Video[] = [
   {
-    videoId: '76979871',
+    videoId: '1092159735',
     title:
-      'Aldrig har så mange løbet gennem Danmark - Globalt spilhit sætter Danmark på verdenskortet',
+      'Nintendo Switch 2 Unboxing (+ controller og kamera)',
     category: 'Gaming',
     description:
-      'Interview med udviklere bag det globale gaming hit der har sat Danmark på verdenskortet. Oplev historien bag succesen og fremtidsplanerne for dansk spiludvikling.',
+      'Vi unboxer den nye Nintendo Switch 2 konsol med mere.',
     views: '12.5K',
-    date: '24. maj, 2025',
+    date: '10. jun, 2025',
     banner: {
       image:
-        'https://via.placeholder.com/350x80/4CAF50/white?text=Nordic+Game+Conference',
-      link: 'https://nordicgame.com',
+        plutoTv,
+      link: 'https://pluto.tv/dk/',
     },
   },
   {
-    videoId: '347119375',
+    videoId: '1092078611',
     title:
-      'Interview | Peter Molyneux fortæller alt: Fable, Fable og Godus Venner',
+      'Switch 2 midnatsåbent',
     category: 'Gaming',
     description:
-      'Eksklusivt interview med den legendariske spiludvikler Peter Molyneux om hans karriere, Fable-serien og fremtidige projekter.',
+      'Natten til grundlovsdag d. 5 juni 2025, stod over 200 mennesker i kø ved Nintendopusheren i København til den nye Nintendo konsol: Nintendo Switch 2. Vi besøgte butikken og fik en snak med ejeren og nogle af kunderne der har glædet sig længe til konsollen.',
     views: '8.2K',
-    date: '22. maj, 2025',
+    date: '10. jun, 2025',
     banner: {
       image:
-        'https://via.placeholder.com/350x80/2196F3/white?text=Game+Developer+Stories',
-      link: 'https://gamedev.example.com',
+        comicon,
+      link: 'https://www.comiccondenmark.com/da/',
     },
   },
   {
-    videoId: '449787858',
-    title: 'Overwatch forandrede hendes liv - Matilda Smedius | Interview',
+    videoId: '1091340260',
+    title: 'Mads Mikkelsen i HITMAN',
     category: 'Gaming',
     description:
-      'Mød Matilda Smedius og hør hvordan Overwatch ændrede hendes liv og karriere inden for esports. En inspirerende historie om passion og dedikation.',
+      'Annonceringstraileren til 007 First Light, co-op i Hitman og Mads Mikkelsen, der vender tilbage som Le Chiffre – og bliver nu et mål i Hitman.',
     views: '15.7K',
-    date: '20. maj, 2025',
-    banner: null,
+    date: '07. iun, 2025',
+    banner: {
+      image:
+        plutoTv,
+      link: 'https://pluto.tv/dk/',
+    },
   },
     {
-      videoId: '347119375',
-      title: 'Nordic Culture Documentary - Traditioner og moderne liv',
+      videoId: '1090457583',
+      title: 'Film- og Serienyhederne | The Last of Us er CRINGE!',
       category: 'Film og Serier',
       description:
-        'Udforsk den rige kulturelle arv i de nordiske lande gennem fantastiske visuelle oplevelser og personlige historier.',
+        'Velkommen til ugens Film- og Serienyhederne',
       views: '7.9K',
-      date: '12. maj, 2025',
-      banner: null,
+      date: '04. jun, 2025',
+      banner: {
+        image:
+          comicon,
+        link: 'https://www.comiccondenmark.com/da/',
+      },
     },
   {
-    videoId: '789123456',
-    title: 'Danish Film Festival 2025 - Highlights',
+    videoId: '1085598542',
+    title: 'EU der spiller',
     category: 'Film og Serier',
     description:
-      'De bedste øjeblikke fra årets danske filmfestival med interviews, behind-the-scenes indhold og sneak peeks af kommende produktioner.',
+      'Velkommen til en ny episode af “EU der spiller” – hvor storpolitik, tvivlsomme alliancer og europæisk afmagt smelter sammen i en virkelighed, der til tider minder mere om en tv-serie end diplomati.',
     views: '6.8K',
-    date: '18. maj, 2025',
+    date: '19. maj, 2025',
     banner: {
       image:
-        'https://via.placeholder.com/350x80/FF9800/white?text=Danish+Film+Institute',
-      link: 'https://dfi.dk',
+        plutoTv,
+      link: 'https://pluto.tv/dk/',
     },
   },
   {
-    videoId: '38395525',
-    title: 'Tech Review: Årets bedste gadgets',
+    videoId: '1080095974',
+    title: 'Anmeldelse | OnePlus Watch 3',
     category: 'Tech og Gadgets',
     description:
-      'Gennemgang af de mest innovative tech gadgets der har ramt det nordiske marked i år. Fra smartphones til smart home devices.',
+      'Jeg har haft fornøjelsen af at have OnePlus Watch 3 på håndledet de sidste par måneder, og er meget imponeret over det kraftfulde ur og ikke mindst det stilfulde udseende! Først og fremmest imponerer det med sin elegante byggekvalitet, kraftfulde hardware og ikke mindst en batteritid, der overgår langt de fleste Wear OS-ure. Skærmen er en lysstærk 1,5″ AMOLED med safirglas og op til 2.200 nits – flot og funktionel selv i direkte sol.',
     views: '9.4K',
-    date: '16. maj, 2025',
-    banner: null,
+    date: '30. apr, 2025',
+    banner: {
+      image:
+        plutoTv,
+      link: 'https://pluto.tv/dk/',
+    },
   },
   {
-    videoId: '38395525',
+    videoId: '1091340260',
     title: 'React Native Development Tutorial - Del 1',
     category: 'Programmer',
     description:
@@ -151,7 +167,7 @@ const mockVideos: Video[] = [
     },
   },
   {
-    videoId: '347119375',
+    videoId: '1091340260',
     title: 'Nordic Culture Documentary - Traditioner og moderne liv',
     category: 'Nordisk Videos',
     description:
@@ -290,7 +306,7 @@ const VideoBlock: React.FC<VideoBlockProps> = ({video, isLiked, onToggleLike}) =
             onPress={handleBannerPress}
             activeOpacity={0.9}>
             <Image
-              source={{uri: video.banner.image}}
+              source={video.banner.image}
               style={styles.bannerImage}
               resizeMode="cover"
             />
@@ -387,21 +403,38 @@ const App: React.FC = () => {
     setSelectedCategory(category);
   };
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <HeaderTabs
-        selectedCategory={selectedCategory}
-        onCategorySelect={handleCategorySelect}
-      />
-      <ScrollableVideoFeed
-        videos={filteredVideos}
-        onRefresh={handleRefresh}
-        refreshing={refreshing}
-        likedVideos={likedVideos}
-        toggleLike={toggleLike}
-      />
-    </SafeAreaView>
-  );
+   return (
+      <SafeAreaView style={styles.container}>
+       <HeaderTabs
+         selectedCategory={selectedCategory}
+         onCategorySelect={handleCategorySelect}
+       />
+
+       <View style={styles.feedWithBanner}>
+         <ScrollableVideoFeed
+           videos={filteredVideos}
+           onRefresh={handleRefresh}
+           refreshing={refreshing}
+           likedVideos={likedVideos}
+           toggleLike={toggleLike}
+         />
+
+         <TouchableOpacity
+           style={styles.fixedBannerContainer}
+           onPress={() => Linking.openURL('https://www.lenovo.com/dk/da/')}
+           activeOpacity={0.9}>
+           <Image
+             source={lenovo}
+             style={styles.fixedBannerImage}
+             resizeMode="cover"
+           />
+           <View style={styles.bannerOverlay}>
+             <Text style={styles.bannerText}>Sponsored Content</Text>
+           </View>
+         </TouchableOpacity>
+       </View>
+     </SafeAreaView>
+   );
 };
 
 const styles = StyleSheet.create({
@@ -456,7 +489,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   feedContainer: {
-    paddingBottom: 30,
+    paddingBottom: 120,
   },
   emptyFeedContainer: {
     flexGrow: 1,
@@ -493,7 +526,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
   },
   playerContainer: {
-    height: 220,
+    height: 209,
     backgroundColor: '#000000',
     position: 'relative',
   },
@@ -575,10 +608,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
     position: 'relative',
+    width: '90%',
+    height: 110,
+    alignSelf: 'center',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   bannerImage: {
     width: '100%',
-    height: 80,
+    height: 90,
   },
   bannerOverlay: {
     position: 'absolute',
@@ -591,7 +629,7 @@ const styles = StyleSheet.create({
   },
   bannerText: {
     color: '#ffffff',
-    fontSize: 10,
+    fontSize: 8,
     fontWeight: '600',
   },
   likeButtonText: {
@@ -601,6 +639,29 @@ const styles = StyleSheet.create({
   },
   liked: {
     color: '#ff4444',
+  },
+  feedWithBanner: {
+    flex: 1,
+    position: 'relative',
+  },
+  fixedBannerContainer: {
+    position: 'absolute',
+    bottom: 0,
+    width: '80%',
+    height: 70,
+    borderWidth: 1,
+    borderColor: '#333333',
+    overflow: 'hidden',
+    alignSelf: 'center',
+  },
+  fixedBannerInner: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fixedBannerImage: {
+    width: '105%',
+    height: '100%',
+    alignSelf: 'center',
   },
 
 });
