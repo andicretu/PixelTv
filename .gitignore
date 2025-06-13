@@ -57,10 +57,25 @@ yarn-error.log
 
 # Ruby / CocoaPods
 /ios/Pods/
-/vendor/bundle/
+/frontend/vendor/bundle/
 
 # Temporary files created by Metro to check the health of the file watcher
 .metro-health-check*
 
 # testing
 /coverage
+
+# Bundler artifacts (if you keep vendor and .bundle in the repo)
+frontend/vendor/
+frontend/.bundle/
+
+# IDE settings
+.idea/
+
+# Node modules
+frontend/node_modules/
+backend/node_modules/
+
+# Env files
+backend/.env
+

@@ -19,3 +19,16 @@ model User {
   name      String?
   createdAt DateTime @default(now())
 }
+
+model Video {
+  id                 Int      @id @default(autoincrement())
+  vimeoId            String   @unique
+  title              String
+  thumbnailUrl       String
+  uploadDate         DateTime
+  ageRecommendation  String
+  views              Int      @default(0)
+  likes              Int      @default(0)
+  createdAt          DateTime @default(now())
+}
+
