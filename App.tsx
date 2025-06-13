@@ -92,7 +92,7 @@ const mockVideos: Video[] = [
     date: '10. jun, 2025',
     banner: {
       image:
-        comicon,
+        lenovo,
       link: 'https://www.comiccondenmark.com/da/',
     },
   },
@@ -120,7 +120,7 @@ const mockVideos: Video[] = [
       date: '04. jun, 2025',
       banner: {
         image:
-          comicon,
+          lenovo,
         link: 'https://www.comiccondenmark.com/da/',
       },
     },
@@ -162,7 +162,7 @@ const mockVideos: Video[] = [
     date: '14. maj, 2025',
     banner: {
       image:
-        'https://via.placeholder.com/350x80/9C27B0/white?text=Learn+Programming',
+        'plutoTv',
       link: 'https://programming.example.com',
     },
   },
@@ -609,14 +609,15 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'relative',
     width: '90%',
-    height: 110,
+    height: 100,
     alignSelf: 'center',
     justifyContent: 'center',
     alignItems: 'center',
   },
   bannerImage: {
-    width: '100%',
-    height: 90,
+    width: '110%',
+    height: 100,
+    backgroundColor: '#583978',
   },
   bannerOverlay: {
     position: 'absolute',
@@ -640,7 +641,7 @@ const styles = StyleSheet.create({
   liked: {
     color: '#ff4444',
   },
-  feedWithBanner: {
+  /*feedWithBanner: {
     flex: 1,
     position: 'relative',
   },
@@ -662,7 +663,7 @@ const styles = StyleSheet.create({
     width: '105%',
     height: '100%',
     alignSelf: 'center',
-  },
+  },*/
 
 });
 
