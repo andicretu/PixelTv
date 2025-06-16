@@ -30,5 +30,7 @@ model Video {
   views              Int      @default(0)
   likes              Int      @default(0)
   createdAt          DateTime @default(now())
+  description        String   @default("")
+  category           String   @default("Gaming")
 }
 

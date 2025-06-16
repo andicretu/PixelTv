@@ -1,4 +1,27 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
 rootProject.name = 'PixelTv'
-apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesSettingsGradle(settings)
+
+// 👇 Load method definitions first
+def nativeModules = file("../node_modules/react-native/cli-platform-android/native_modules.gradle")
+if (nativeModules.exists()) {
+    apply from: nativeModules
+    if (settings.hasProperty("applyNativeModulesSettingsGradle")) {
+        applyNativeModulesSettingsGradle(settings)
+    }
+}
+
+// 👇 Now check if the method is available before calling it
+if (settings.hasProperty("applyNativeModulesSettingsGradle")) {
+    applyNativeModulesSettingsGradle(settings)
+}
+
 include ':app'
-includeBuild('../node_modules/@react-native/gradle-plugin')
+includeBuild("../node_modules/react-native/ReactAndroid")
+

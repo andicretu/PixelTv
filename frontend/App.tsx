@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import logoImage from './assets/images/logo.png';
 import plutoTv from './assets/images/PlutoTv.png';
 import lenovo from './assets/images/lenovo.png';
@@ -22,9 +22,27 @@ import {WebView} from 'react-native-webview';
 
 //const {width: screenWidth} = Dimensions.get('window');
 
+const fetchVideos = async (): Promise<Video[]> => {
+  const res = await fetch('http://10.0.2.2:3000/api/videos');
+  const data = await res.json();
+
+  return data.map((video: any) => ({
+    videoId: video.vimeoId,
+    title: video.title,
+    category: video.category, // hardcoded or adjust later
+    description: '',     // placeholder
+    views: video.views.toString(),
+    date: new Date(video.uploadDate).toLocaleDateString(),
+    banner: {
+      image: { uri: video.thumbnailUrl },
+      link: `https://vimeo.com/${video.vimeoId}`
+    }
+  }));
+};
+
 // Type definitions
 interface Banner {
-  image: number;
+  image: { uri: string };
   link: string;
 }
 
@@ -63,120 +81,6 @@ interface ScrollableVideoFeedProps {
   likedVideos: string[];
   toggleLike: (videoId: string) => void;
 }
-
-// Mock data with proper typing
-const mockVideos: Video[] = [
-  {
-    videoId: '1092159735',
-    title:
-      'Nintendo Switch 2 Unboxing (+ controller og kamera)',
-    category: 'Gaming',
-    description:
-      'Vi unboxer den nye Nintendo Switch 2 konsol med mere.',
-    views: '12.5K',
-    date: '10. jun, 2025',
-    banner: {
-      image:
-        plutoTv,
-      link: 'https://pluto.tv/dk/',
-    },
-  },
-  {
-    videoId: '1092078611',
-    title:
-      'Switch 2 midnatsåbent',
-    category: 'Gaming',
-    description:
-      'Natten til grundlovsdag d. 5 juni 2025, stod over 200 mennesker i kø ved Nintendopusheren i København til den nye Nintendo konsol: Nintendo Switch 2. Vi besøgte butikken og fik en snak med ejeren og nogle af kunderne der har glædet sig længe til konsollen.',
-    views: '8.2K',
-    date: '10. jun, 2025',
-    banner: {
-      image:
-        lenovo,
-      link: 'https://www.comiccondenmark.com/da/',
-    },
-  },
-  {
-    videoId: '1091340260',
-    title: 'Mads Mikkelsen i HITMAN',
-    category: 'Gaming',
-    description:
-      'Annonceringstraileren til 007 First Light, co-op i Hitman og Mads Mikkelsen, der vender tilbage som Le Chiffre – og bliver nu et mål i Hitman.',
-    views: '15.7K',
-    date: '07. iun, 2025',
-    banner: {
-      image:
-        plutoTv,
-      link: 'https://pluto.tv/dk/',
-    },
-  },
-    {
-      videoId: '1090457583',
-      title: 'Film- og Serienyhederne | The Last of Us er CRINGE!',
-      category: 'Film og Serier',
-      description:
-        'Velkommen til ugens Film- og Serienyhederne',
-      views: '7.9K',
-      date: '04. jun, 2025',
-      banner: {
-        image:
-          lenovo,
-        link: 'https://www.comiccondenmark.com/da/',
-      },
-    },
-  {
-    videoId: '1085598542',
-    title: 'EU der spiller',
-    category: 'Film og Serier',
-    description:
-      'Velkommen til en ny episode af “EU der spiller” – hvor storpolitik, tvivlsomme alliancer og europæisk afmagt smelter sammen i en virkelighed, der til tider minder mere om en tv-serie end diplomati.',
-    views: '6.8K',
-    date: '19. maj, 2025',
-    banner: {
-      image:
-        plutoTv,
-      link: 'https://pluto.tv/dk/',
-    },
-  },
-  {
-    videoId: '1080095974',
-    title: 'Anmeldelse | OnePlus Watch 3',
-    category: 'Tech og Gadgets',
-    description:
-      'Jeg har haft fornøjelsen af at have OnePlus Watch 3 på håndledet de sidste par måneder, og er meget imponeret over det kraftfulde ur og ikke mindst det stilfulde udseende! Først og fremmest imponerer det med sin elegante byggekvalitet, kraftfulde hardware og ikke mindst en batteritid, der overgår langt de fleste Wear OS-ure. Skærmen er en lysstærk 1,5″ AMOLED med safirglas og op til 2.200 nits – flot og funktionel selv i direkte sol.',
-    views: '9.4K',
-    date: '30. apr, 2025',
-    banner: {
-      image:
-        plutoTv,
-      link: 'https://pluto.tv/dk/',
-    },
-  },
-  {
-    videoId: '1091340260',
-    title: 'React Native Development Tutorial - Del 1',
-    category: 'Programmer',
-    description:
-      'Lær at bygge mobile apps med React Native fra bunden. Denne serie er perfekt til begyndere og erfarne udviklere der vil udvide deres skillset.',
-    views: '11.2K',
-    date: '14. maj, 2025',
-    banner: {
-      image:
-        'plutoTv',
-      link: 'https://programming.example.com',
-    },
-  },
-  {
-    videoId: '1091340260',
-    title: 'Nordic Culture Documentary - Traditioner og moderne liv',
-    category: 'Nordisk Videos',
-    description:
-      'Udforsk den rige kulturelle arv i de nordiske lande gennem fantastiske visuelle oplevelser og personlige historier.',
-    views: '7.9K',
-    date: '12. maj, 2025',
-    banner: null,
-  },
-];
 
 const categories: Category[] = [
   'Gaming',
@@ -374,6 +278,15 @@ const ScrollableVideoFeed: React.FC<ScrollableVideoFeedProps> = ({
 // Main App Component with enhanced state management
 const App: React.FC = () => {
 
+  const [videos, setVideos] = useState<Video[]>([]);
+
+    useEffect(() => {
+      fetchVideos()
+        .then(setVideos)
+        .catch((error) => console.error('Failed to fetch videos:', error));
+    }, []);
+
+
   const [likedVideos, setLikedVideos] = useState<string[]>([]);
 
   const toggleLike = (videoId: string): void => {
@@ -387,9 +300,11 @@ const App: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<Category>('Gaming');
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
-  const filteredVideos: Video[] = mockVideos.filter(
+  /*const filteredVideos: Video[] = videos.filter(
     (video: Video) => video.category === selectedCategory,
-  );
+  );*/
+
+  const filteredVideos: Video[] = videos;
 
   const handleRefresh = (): void => {
     setRefreshing(true);
