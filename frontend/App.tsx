@@ -1,8 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import logoImage from './assets/images/logo.png';
-import plutoTv from './assets/images/PlutoTv.png';
-import lenovo from './assets/images/lenovo.png';
-import comicon from './assets/images/comicon.png';
+import { bannerRules } from './data/banners';
 
 import {
   View,
@@ -23,22 +21,24 @@ import {WebView} from 'react-native-webview';
 //const {width: screenWidth} = Dimensions.get('window');
 
 const fetchVideos = async (): Promise<Video[]> => {
-  const res = await fetch('http://10.0.2.2:3000/api/videos');
+  const res = await fetch('http://10.0.2.2:3000/api/videos/latest');
   const data = await res.json();
 
-  return data.map((video: any) => ({
-    videoId: video.vimeoId,
-    title: video.title,
-    category: video.category, // hardcoded or adjust later
-    description: '',     // placeholder
-    views: video.views.toString(),
-    date: new Date(video.uploadDate).toLocaleDateString(),
-    banner: {
-      image: { uri: video.thumbnailUrl },
-      link: `https://vimeo.com/${video.vimeoId}`
-    }
-  }));
+  return data.map((video: any, index: number) => {
+    const matchedRule = bannerRules.find(rule => rule.condition(video, index));
+
+    return {
+      videoId: video.vimeoId,
+      title: video.title,
+      category: video.category,
+      description: '',     // placeholder
+      views: video.views.toString(),
+      uploadDate: video.uploadDate,
+      banner: matchedRule?.banner || null,
+    };
+  });
 };
+
 
 // Type definitions
 interface Banner {
@@ -52,7 +52,7 @@ interface Video {
   category: string;
   description: string;
   views: string;
-  date: string;
+  uploadDate: string;
   banner?: Banner | null;
 }
 
@@ -184,7 +184,9 @@ const VideoBlock: React.FC<VideoBlockProps> = ({video, isLiked, onToggleLike}) =
         <View style={styles.metadataContainer}>
           <Text style={styles.metadataText}>{video.views} visninger</Text>
           <Text style={styles.metadataDot}>•</Text>
-          <Text style={styles.metadataText}>{video.date}</Text>
+          <Text style={styles.metadataText}>
+            {new Date(video.uploadDate).toLocaleDateString()}
+          </Text>
         </View>
 
         {/* Description */}
@@ -300,11 +302,9 @@ const App: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<Category>('Gaming');
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
-  /*const filteredVideos: Video[] = videos.filter(
+  const filteredVideos: Video[] = videos.filter(
     (video: Video) => video.category === selectedCategory,
-  );*/
-
-  const filteredVideos: Video[] = videos;
+  );
 
   const handleRefresh = (): void => {
     setRefreshing(true);
@@ -334,19 +334,6 @@ const App: React.FC = () => {
            toggleLike={toggleLike}
          />
 
-         <TouchableOpacity
-           style={styles.fixedBannerContainer}
-           onPress={() => Linking.openURL('https://www.lenovo.com/dk/da/')}
-           activeOpacity={0.9}>
-           <Image
-             source={lenovo}
-             style={styles.fixedBannerImage}
-             resizeMode="cover"
-           />
-           <View style={styles.bannerOverlay}>
-             <Text style={styles.bannerText}>Sponsored Content</Text>
-           </View>
-         </TouchableOpacity>
        </View>
      </SafeAreaView>
    );
@@ -557,29 +544,6 @@ const styles = StyleSheet.create({
   liked: {
     color: '#ff4444',
   },
-  /*feedWithBanner: {
-    flex: 1,
-    position: 'relative',
-  },
-  fixedBannerContainer: {
-    position: 'absolute',
-    bottom: 0,
-    width: '80%',
-    height: 70,
-    borderWidth: 1,
-    borderColor: '#333333',
-    overflow: 'hidden',
-    alignSelf: 'center',
-  },
-  fixedBannerInner: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  fixedBannerImage: {
-    width: '105%',
-    height: '100%',
-    alignSelf: 'center',
-  },*/
 
 });
 

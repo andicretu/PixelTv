@@ -11,7 +11,6 @@ router.get('/', async (req, res) => {
 router.get('/latest', async (req, res) => {
   const videos = await prisma.video.findMany({
     orderBy: { uploadDate: 'desc' },
-    take: 3,
   });
   res.json(videos);
 });
