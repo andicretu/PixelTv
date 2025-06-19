@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback, useMemo} from 'react';
 import logoImage from './assets/images/logo.png';
 import { bannerRules } from './data/banners';
 
@@ -78,7 +78,7 @@ interface ScrollableVideoFeedProps {
   videos: Video[];
   onRefresh: () => void;
   refreshing: boolean;
-  likedVideos: string[];
+  likedMap: Set<string>;
   toggleLike: (videoId: string) => void;
 }
 
@@ -132,106 +132,112 @@ const HeaderTabs: React.FC<HeaderTabsProps> = ({
 };
 
 // Enhanced Video Block with better metadata display
-const VideoBlock: React.FC<VideoBlockProps> = ({video, isLiked, onToggleLike}) => {
-  const vimeoUrl: string = `https://player.vimeo.com/video/${video.videoId}?autoplay=0&muted=1&controls=1&playsinline=1&title=0&byline=0&portrait=0`;
+const VideoBlock: React.FC<VideoBlockProps> = React.memo(
+    ({video, isLiked, onToggleLike}) => {
+      const vimeoUrl: string = `https://player.vimeo.com/video/${video.videoId}?autoplay=0&muted=1&controls=1&playsinline=1&title=0&byline=0&portrait=0`;
 
-  const handleBannerPress = async (): Promise<void> => {
-    if (video.banner?.link) {
-      try {
-        await Linking.openURL(video.banner.link);
-      } catch (error) {
-        console.error('Failed to open URL:', error);
-      }
-    }
-  };
+      const handleBannerPress = async (): Promise<void> => {
+        if (video.banner?.link) {
+          try {
+            await Linking.openURL(video.banner.link);
+          } catch (error) {
+            console.error('Failed to open URL:', error);
+          }
+        }
+      };
 
-  const renderLoadingComponent = (): JSX.Element => (
-    <View style={styles.loadingContainer}>
-      <View style={styles.loadingSpinner} />
-      <Text style={styles.loadingText}>Loading video...</Text>
-    </View>
-  );
+      const renderLoadingComponent = (): JSX.Element => (
+        <View style={styles.loadingContainer}>
+          <View style={styles.loadingSpinner} />
+          <Text style={styles.loadingText}>Loading video...</Text>
+        </View>
+      );
 
-  return (
-    <View style={styles.videoBlock}>
-      {/* Vimeo Player */}
-      <View style={styles.playerContainer}>
-        <WebView
-          source={{uri: vimeoUrl}}
-          style={styles.webView}
-          allowsFullscreenVideo={true}
-          mediaPlaybackRequiresUserAction={false}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
-          startInLoadingState={true}
-          renderLoading={renderLoadingComponent}
-        />
-      </View>
+      return (
+        <View style={styles.videoBlock}>
+          {/* Vimeo Player */}
+          <View style={styles.playerContainer}>
+            <WebView
+              source={{uri: vimeoUrl}}
+              style={styles.webView}
+              allowsFullscreenVideo={true}
+              mediaPlaybackRequiresUserAction={false}
+              javaScriptEnabled={true}
+              domStorageEnabled={true}
+              startInLoadingState={true}
+              renderLoading={renderLoadingComponent}
+            />
+          </View>
 
-      {/* Video Information */}
-      <View style={styles.contentContainer}>
-        {/* Title and Category */}
-        <View style={styles.titleContainer}>
-          <Text style={styles.videoTitle} numberOfLines={2}>
-            {video.title}
-          </Text>
-          <View style={styles.categoryBadge}>
-            <Text style={styles.categoryText}>{video.category}</Text>
+          {/* Video Information */}
+          <View style={styles.contentContainer}>
+            {/* Title and Category */}
+            <View style={styles.titleContainer}>
+              <Text style={styles.videoTitle} numberOfLines={2}>
+                {video.title}
+              </Text>
+              <View style={styles.categoryBadge}>
+                <Text style={styles.categoryText}>{video.category}</Text>
+              </View>
+            </View>
+
+            {/* Metadata */}
+            <View style={styles.metadataContainer}>
+              <Text style={styles.metadataText}>{video.views} visninger</Text>
+              <Text style={styles.metadataDot}>•</Text>
+              <Text style={styles.metadataText}>
+                {new Date(video.uploadDate).toLocaleDateString()}
+              </Text>
+            </View>
+
+            {/* Description */}
+            <Text style={styles.videoDescription} numberOfLines={3}>
+              {video.description}
+            </Text>
+
+            {/* Like Button */}
+            <TouchableOpacity
+              style={styles.likeButton}
+              onPress={onToggleLike}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.likeButtonText, isLiked && styles.liked]}>
+                {isLiked ? '♥ Liked' : '♡ Like'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Optional Banner */}
+            {video.banner && (
+              <TouchableOpacity
+                style={styles.bannerContainer}
+                onPress={handleBannerPress}
+                activeOpacity={0.9}>
+                <Image
+                  source={video.banner.image}
+                  style={styles.bannerImage}
+                  resizeMode="cover"
+                />
+                <View style={styles.bannerOverlay}>
+                  <Text style={styles.bannerText}>Sponsored Content</Text>
+                </View>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
+      );
 
-        {/* Metadata */}
-        <View style={styles.metadataContainer}>
-          <Text style={styles.metadataText}>{video.views} visninger</Text>
-          <Text style={styles.metadataDot}>•</Text>
-          <Text style={styles.metadataText}>
-            {new Date(video.uploadDate).toLocaleDateString()}
-          </Text>
-        </View>
-
-        {/* Description */}
-        <Text style={styles.videoDescription} numberOfLines={3}>
-          {video.description}
-        </Text>
-
-        {/* Like Button */}
-        <TouchableOpacity
-          style={styles.likeButton}
-          onPress={onToggleLike}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.likeButtonText, isLiked && styles.liked]}>
-            {isLiked ? '♥ Liked' : '♡ Like'}
-          </Text>
-        </TouchableOpacity>
-
-        {/* Optional Banner */}
-        {video.banner && (
-          <TouchableOpacity
-            style={styles.bannerContainer}
-            onPress={handleBannerPress}
-            activeOpacity={0.9}>
-            <Image
-              source={video.banner.image}
-              style={styles.bannerImage}
-              resizeMode="cover"
-            />
-            <View style={styles.bannerOverlay}>
-              <Text style={styles.bannerText}>Sponsored Content</Text>
-            </View>
-          </TouchableOpacity>
-        )}
-      </View>
-    </View>
-  );
-};
+    },
+  (prevProps, nextProps) =>
+    prevProps.video.videoId === nextProps.video.videoId &&
+    prevProps.isLiked === nextProps.isLiked
+);
 
 // Enhanced Video Feed with pull-to-refresh
 const ScrollableVideoFeed: React.FC<ScrollableVideoFeedProps> = ({
   videos,
   onRefresh,
   refreshing,
-  likedVideos,
+  likedMap,
   toggleLike,
 }) => {
   const renderEmptyState = (): JSX.Element => (
@@ -243,13 +249,16 @@ const ScrollableVideoFeed: React.FC<ScrollableVideoFeedProps> = ({
     </View>
   );
 
-  const renderVideoItem: ListRenderItem<Video> = ({item}) => (
-    <VideoBlock
-    video={item}
-    isLiked={likedVideos.includes(item.videoId)}
-    onToggleLike={() => toggleLike(item.videoId)}
-    />
-  );
+    const renderVideoItem = useCallback<ListRenderItem<Video>>(
+      ({item}) => (
+        <VideoBlock
+          video={item}
+          isLiked={likedMap.has(item.videoId)}
+          onToggleLike={() => toggleLike(item.videoId)}
+        />
+      ),
+      [likedMap, toggleLike]
+    );
 
   return (
     <FlatList<Video>
@@ -290,6 +299,7 @@ const App: React.FC = () => {
 
 
   const [likedVideos, setLikedVideos] = useState<string[]>([]);
+  const likedMap = useMemo(() => new Set(likedVideos), [likedVideos]);
 
   const toggleLike = (videoId: string): void => {
       setLikedVideos(prev =>
@@ -330,7 +340,7 @@ const App: React.FC = () => {
            videos={filteredVideos}
            onRefresh={handleRefresh}
            refreshing={refreshing}
-           likedVideos={likedVideos}
+           likedMap={likedMap}
            toggleLike={toggleLike}
          />
 
