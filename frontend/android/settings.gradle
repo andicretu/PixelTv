@@ -1,8 +1,8 @@
 pluginManagement {
     repositories {
-        gradlePluginPortal()
         google()
         mavenCentral()
+        gradlePluginPortal()
     }
 }
 
@@ -23,5 +23,5 @@ if (settings.hasProperty("applyNativeModulesSettingsGradle")) {
 }
 
 include ':app'
-includeBuild("../node_modules/react-native/ReactAndroid")
+//includeBuild("../node_modules/react-native/ReactAndroid")
 
