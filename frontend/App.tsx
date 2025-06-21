@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  //Dimensions,
+  Dimensions,
   Image,
   Linking,
   StatusBar,
@@ -18,7 +18,7 @@ import {
   ListRenderItem,
 } from 'react-native';
 
-const host = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
+const host = Platform.OS === 'android' ? '10.0.2.2' : '192.168.0.49';
 
 const videoApiUrl = `http://${host}:3000/api/videos/latest`;
 
@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
   },
   playerContainer: {
-    height: 209,
+    height: 189,
     backgroundColor: '#000000',
     position: 'relative',
   },
