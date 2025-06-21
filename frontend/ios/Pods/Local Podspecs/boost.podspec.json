@@ -9,7 +9,8 @@
   "summary": "Boost provides free peer-reviewed portable C++ source libraries.",
   "authors": "Rene Rivera",
   "source": {
-    "http": "https://github.com/react-native-community/boost-for-react-native/releases/download/v1.63.0-0/boost-for-react-native.tar.gz"
+    "git": "https://github.com/react-native-community/boost-for-react-native.git",
+    "tag": "v1.84.0"
   },
   "platforms": {
     "ios": "11.0"

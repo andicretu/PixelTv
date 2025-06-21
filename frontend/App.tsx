@@ -1,7 +1,8 @@
 import React, {useState, useEffect, useCallback, useMemo} from 'react';
 import logoImage from './assets/images/logo.png';
-import { bannerRules } from './data/banners';
-
+import {bannerRules} from './data/banners';
+import {Platform} from 'react-native';
+import { WebView } from 'react-native-webview';
 import {
   View,
   Text,
@@ -16,12 +17,13 @@ import {
   RefreshControl,
   ListRenderItem,
 } from 'react-native';
-import {WebView} from 'react-native-webview';
 
-//const {width: screenWidth} = Dimensions.get('window');
+const host = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
+
+const videoApiUrl = `http://${host}:3000/api/videos/latest`;
 
 const fetchVideos = async (): Promise<Video[]> => {
-  const res = await fetch('http://10.0.2.2:3000/api/videos/latest');
+  const res = await fetch(videoApiUrl);
   const data = await res.json();
 
   return data.map((video: any, index: number) => {

@@ -4,12 +4,14 @@ platform :ios, '12.4'
 prepare_react_native_project!
 
 target 'PixelTv' do
+  pod 'react-native-webview', :path => '../node_modules/react-native-webview'
   flags = get_default_flags()
 
   use_react_native!(
     :path => '../node_modules/react-native',
     :hermes_enabled => false,
     :fabric_enabled => false,
+    :new_arch_enabled => false,
     :flipper_configuration => FlipperConfiguration.disabled,
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
@@ -30,5 +32,18 @@ target 'PixelTv' do
         config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.4'
       end
     end
-  end
-end
+
+    # ── Remove SysUio.cpp so RCT-Folly compiles on iOS ──
+    installer.pods_project.targets.each do |t|
+      if t.name == 'RCT-Folly'
+        t.source_build_phase.files.each do |f|
+          if f.file_ref.path.end_with?('portability/SysUio.cpp')
+            f.remove_from_project
+          end
+        end
+      end
+    end
+  end  # ← closes post_install
+
+end  # ← closes target 'PixelTv'
+
