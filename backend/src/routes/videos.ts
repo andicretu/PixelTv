@@ -1,6 +1,7 @@
 import express from 'express';
 import { prisma } from '../prisma';
 
+
 const router = express.Router();
 
 router.get('/', async (req, res) => {
@@ -25,15 +26,17 @@ router.post('/', async (req, res) => {
         uploadDate: new Date(req.body.uploadDate),
         thumbnailUrl: req.body.thumbnailUrl,
         category: req.body.category,
-        ageRecommendation: 'All Ages', // hardcoded for now
+        ageRecommendation: 'All Ages', // optional
       },
     });
     res.status(201).json(video);
   } catch (err) {
-    console.error('POST /api/videos error:', err);
-    res.status(500).json({ error: 'Insert failed' });
+    console.error('POST /api/videos failed:', err);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+
 
 
 

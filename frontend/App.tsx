@@ -18,9 +18,10 @@ import {
   ListRenderItem,
 } from 'react-native';
 
-const host = Platform.OS === 'android' ? '10.0.2.2' : '192.168.0.49';
+const host = Platform.OS === 'android' ? '10.0.2.2' : 'pixeltv-api.fly.dev';
 
-const videoApiUrl = `http://${host}:3000/api/videos/latest`;
+const videoApiUrl = `https://${host}/api/videos/latest`;
+
 
 const fetchVideos = async (): Promise<Video[]> => {
   const res = await fetch(videoApiUrl);
@@ -351,6 +352,8 @@ const App: React.FC = () => {
    );
 };
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -440,9 +443,12 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
   },
   playerContainer: {
-    height: 189,
+    width: SCREEN_WIDTH,        // full device width
+    aspectRatio: 16 / 9,        // or whatever aspect your videos are
     backgroundColor: '#000000',
     position: 'relative',
+    overflow: 'hidden',
+    borderRadius: 12,
   },
   webView: {
     flex: 1,
@@ -530,7 +536,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   bannerImage: {
-    width: '110%',
+    width: '118%',
     height: 100,
     backgroundColor: '#583978',
   },

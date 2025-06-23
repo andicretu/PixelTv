@@ -18,6 +18,20 @@ android {
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
     }
+    signingConfigs {
+        release {
+            storeFile file("my-release-key.jks")
+            storePassword "pixeltvandroidapp"
+            keyAlias "my-key-alias"
+            keyPassword "pixeltvandroidapp"
+        }
+    }
+    buildTypes {
+        release {
+            // ...
+            signingConfig signingConfigs.release
+        }
+    }
 }
 
 dependencies {
