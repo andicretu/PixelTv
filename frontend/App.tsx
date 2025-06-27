@@ -18,9 +18,11 @@ import {
   ListRenderItem,
 } from 'react-native';
 
-const host = Platform.OS === 'android' ? '10.0.2.2' : 'pixeltv-api.fly.dev';
-
-const videoApiUrl = `https://${host}/api/videos/latest`;
+const videoApiUrl = Platform.OS === 'android'
+  // Android emulator → your laptop’s localhost on port 3000 over HTTP
+  ? 'http://10.0.2.2:3000/api/videos/latest'
+  // iOS simulator and real devices (in __DEV__, if you’re using Fly API)
+  : 'https://pixeltv-api.fly.dev/api/videos/latest';
 
 
 const fetchVideos = async (): Promise<Video[]> => {
@@ -64,7 +66,7 @@ type Category =
   | 'Film og Serier'
   | 'Tech og Gadgets'
   | 'Programmer'
-  | 'Nordisk Videos';
+  | 'Danish Games';
 
 interface HeaderTabsProps {
   selectedCategory: Category;
@@ -90,7 +92,7 @@ const categories: Category[] = [
   'Film og Serier',
   'Tech og Gadgets',
   'Programmer',
-  'Nordisk Videos',
+  'Danish Games',
 ];
 
 // Enhanced Header with better styling

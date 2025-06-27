@@ -1,5 +1,11 @@
 apply plugin: "com.android.application"
 
+// Classic RN setup – bundles your JS via react.gradle
+project.ext.react = [
+        entryFile: "index.js",
+        enableHermes: false   // ← uses JSC so no libhermes.so error
+]
+
 android {
     namespace "com.pixeltv"
     compileSdkVersion rootProject.ext.compileSdkVersion
@@ -12,24 +18,23 @@ android {
         versionName "1.0"
     }
 
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
-        }
-    }
     signingConfigs {
         release {
-            storeFile file("my-release-key.jks")
+            storeFile    file("my-release-key.jks")
             storePassword "pixeltvandroidapp"
-            keyAlias "my-key-alias"
-            keyPassword "pixeltvandroidapp"
+            keyAlias      "my-key-alias"
+            keyPassword   "pixeltvandroidapp"
         }
     }
+
     buildTypes {
         release {
-            // ...
-            signingConfig signingConfigs.release
+            signingConfig    signingConfigs.release
+            minifyEnabled    false
+            proguardFiles    getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+        }
+        debug {
+            applicationIdSuffix ".debug"
         }
     }
 }
@@ -38,5 +43,7 @@ dependencies {
     implementation("com.facebook.react:react-android:0.71.10")
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation fileTree(dir: "libs", include: ["*.jar"])
-    //implementation project(':ReactAndroid')
 }
+
+// This wires up project.ext.react above to run the bundle task
+apply from: "../../node_modules/react-native/react.gradle"

@@ -3,13 +3,15 @@ import axios from 'axios';
 const WP_API_URL = 'https://pixel.tv/wp-json/wp/v2/posts?_embed&per_page=100';
 const FLY_API_URL = 'https://pixeltv-api.fly.dev/api/videos';
 
+console.log('[cron] import-videos-onserver.ts started at', new Date().toISOString());
+
 // Category mapping from WP category IDs to labels
 const categoryMap: Record<string, number[]> = {
   'Gaming': [2038, 7, 1267, 800, 284],
   'Film og Serier': [801, 908, 285, 6],
   'Tech og Gadgets': [3261, 2397, 9, 3239, 2396],
   'Programmer': [8],
-  'Nordisk Videos': [3883],
+  'Danish Games': [3883],
 };
 
 function mapCategory(id: number): string {
@@ -20,6 +22,7 @@ function mapCategory(id: number): string {
 }
 
 async function syncVideosToFly() {
+
   const postTypesToScan = ['posts', 'anmeldelser', 'underholdning'];
 
   for (const type of postTypesToScan) {

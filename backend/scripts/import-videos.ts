@@ -8,7 +8,7 @@ const categoryMap: Record<string, number[]> = {
   'Film og Serier': [801, 908, 285, 6],
   'Tech og Gadgets': [3261, 2397, 9, 3239, 2396],
   'Programmer': [8],
-  'Nordisk Videos': [3883],
+  'Danish Games': [3883],
 };
 
 function getCategory(categoryId: number): string {

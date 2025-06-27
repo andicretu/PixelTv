@@ -23,3 +23,20 @@ primary_region = 'arn'
   memory = '1gb'
   cpu_kind = 'shared'
   cpus = 1
+
+[[cron]]
+schedule = "15 12 * * *"
+command = "npx ts-node scripts/import-videos-onserver.ts"
+
+[[cron]]
+schedule = "20 12 * * *"
+command = "npx ts-node scripts/clean-quotes-inDB.ts"
+
+[[cron]]
+schedule = "15 16 * * *"
+command = "npx ts-node scripts/import-videos-onserver.ts"
+
+[[cron]]
+schedule = "20 16 * * *"
+command = "npx ts-node scripts/clean-quotes-inDB.ts"
+

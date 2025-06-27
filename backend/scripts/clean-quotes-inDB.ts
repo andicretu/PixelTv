@@ -2,7 +2,10 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+console.log('[cron] clean-quotes-inDB.ts started at', new Date().toISOString());
+
 function cleanText(text: string): string {
+    
   return text
     .replace(/&#8217;/g, '’') // right apostrophe
     .replace(/&#8216;/g, '‘') // left apostrophe
