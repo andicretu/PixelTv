@@ -10,6 +10,18 @@ android {
     namespace "com.pixeltv"
     compileSdkVersion rootProject.ext.compileSdkVersion
 
+    sourceSets {
+        main {
+            // ensure JNI libs from Hermes are included
+            jniLibs.srcDirs += ["src/main/jniLibs",
+                                "../../node_modules/hermes-engine/android/hermes-release/jni"]
+        }
+    }
+
+    packagingOptions {
+        pickFirst "**/libc++_shared.so"
+    }
+
     defaultConfig {
         applicationId "com.pixeltv"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -43,6 +55,13 @@ dependencies {
     implementation("com.facebook.react:react-android:0.71.10")
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation fileTree(dir: "libs", include: ["*.jar"])
+    implementation("org.webkit:android-jsc:r216113")
+}
+
+configurations.all {
+    resolutionStrategy {
+        force 'org.webkit:android-jsc:r216113'
+    }
 }
 
 // This wires up project.ext.react above to run the bundle task
