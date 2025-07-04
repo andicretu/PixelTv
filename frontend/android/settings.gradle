@@ -1,11 +1,34 @@
-rootProject.name = 'PixelTv'
+pluginManagement {
+        repositories {
+                gradlePluginPortal()    // for Gradle plugins
+                google()                // Android Gradle Plugin
+                mavenCentral()          // Kotlin Gradle plugin
+                mavenLocal()            // local AARs
+        }
+        plugins {
+                id("com.android.application") version "8.1.1" apply false
+                //id("org.jetbrains.kotlin.android") version "1.9.22" apply false
+                id("com.facebook.react") apply false
+        }
+}
 
-include ':app'
+// Include RN’s own Gradle‐plugin code as a composite build:
+includeBuild("../node_modules/react-native-gradle-plugin")
 
-// …and autolinked WebView native module
+dependencyResolutionManagement {
+        repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+        repositories {
+                google()
+                mavenCentral()
+                mavenLocal()
+                // React Native core AAR
+                maven { url = uri("$rootDir/../node_modules/react-native/android") }
+                // JSC AAR
+                maven { url = uri("$rootDir/../node_modules/jsc-android/android") }
+        }
+}
+
+rootProject.name = "PixelTv"
+include(":app")
 include(":react-native-webview")
-project(":react-native-webview").projectDir = new File(
-        rootProject.projectDir,
-        "../node_modules/react-native-webview/android"
-        )
-
+project(":react-native-webview").projectDir = file("../node_modules/react-native-webview/android")

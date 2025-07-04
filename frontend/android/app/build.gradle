@@ -1,25 +1,60 @@
-apply plugin: "com.android.application"
+// 1) buildscript must come first
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        // bring in the Kotlin Gradle plugin for this module
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22")
+    }
+}
 
-// Classic RN setup – bundles your JS via react.gradle
+// 2) now the plugins block
+plugins {
+    id 'com.android.application'
+    id 'com.facebook.react'
+}
+
 project.ext.react = [
         entryFile: "index.js",
         enableHermes: false   // ← uses JSC so no libhermes.so error
 ]
 
+apply plugin: 'kotlin-android'
+
 android {
-    namespace "com.pixeltv"
-    compileSdkVersion rootProject.ext.compileSdkVersion
+    namespace           "com.pixeltv"
+    compileSdkVersion   34
+
+    buildFeatures {
+        buildConfig = true
+    }
+
+    defaultConfig {
+        applicationId     "com.pixeltv"
+        minSdkVersion     21
+        targetSdkVersion  34
+        versionCode       1
+        versionName       "1.0"
+    }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
+    // Kotlin compiler options
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+
     sourceSets {
         main {
-            // ensure JNI libs from Hermes are included
-            jniLibs.srcDirs += ["src/main/jniLibs",
-                                "../../node_modules/hermes-engine/android/hermes-release/jni"]
+            jniLibs.srcDirs += [
+                    "src/main/jniLibs",
+                    "../../node_modules/hermes-engine/android/hermes-release/jni"
+            ]
         }
     }
 
@@ -27,17 +62,9 @@ android {
         pickFirst "lib/**/libc++_shared.so"
     }
 
-    defaultConfig {
-        applicationId "com.pixeltv"
-        minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
-    }
-
     signingConfigs {
         release {
-            storeFile    file("my-release-key.jks")
+            storeFile     file("my-release-key.jks")
             storePassword "pixeltvandroidapp"
             keyAlias      "my-key-alias"
             keyPassword   "pixeltvandroidapp"
@@ -45,23 +72,24 @@ android {
     }
 
     buildTypes {
+        debug {
+            applicationIdSuffix ".debug"
+        }
         release {
             signingConfig    signingConfigs.release
             minifyEnabled    false
-            proguardFiles    getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
-        }
-        debug {
-            applicationIdSuffix ".debug"
+            proguardFiles    getDefaultProguardFile("proguard-android.txt"),
+                    "proguard-rules.pro"
         }
     }
 }
 
 dependencies {
-    implementation("com.facebook.react:react-android:0.73.5")
+    implementation("com.facebook.react:react-native:0.73.5")
+    implementation project(":react-native-webview")
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation("org.webkit:android-jsc:r216113")
-    implementation project(":react-native-webview")
 }
 
 configurations.all {
@@ -70,5 +98,5 @@ configurations.all {
     }
 }
 
-// This wires up project.ext.react above to run the bundle task
 apply from: "../../node_modules/react-native/react.gradle"
+
