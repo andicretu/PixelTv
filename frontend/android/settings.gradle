@@ -1,18 +1,22 @@
 pluginManagement {
         repositories {
-                gradlePluginPortal()    // for Gradle plugins
+                gradlePluginPortal()    // for community plugins
                 google()                // Android Gradle Plugin
-                mavenCentral()          // Kotlin Gradle plugin
-                mavenLocal()            // local AARs
+                mavenCentral()          // Kotlin, React-Android AAR, etc.
+                mavenLocal()            // any locally published artifacts
         }
         plugins {
+                // Android application plugin
                 id("com.android.application") version "8.1.1" apply false
-                //id("org.jetbrains.kotlin.android") version "1.9.22" apply false
-                id("com.facebook.react") apply false
+
+                // Kotlin Android plugin (optional, if you use Kotlin in your app)
+                id("org.jetbrains.kotlin.android") version "1.9.22" apply false
+
+                id("com.facebook.react") version "0.73.5" apply false
         }
 }
 
-// Include RN’s own Gradle‐plugin code as a composite build:
+// Pull in the local react-native-gradle-plugin code as a composite build
 includeBuild("../node_modules/react-native-gradle-plugin")
 
 dependencyResolutionManagement {
@@ -21,10 +25,21 @@ dependencyResolutionManagement {
                 google()
                 mavenCentral()
                 mavenLocal()
-                // React Native core AAR
+
+                // React Native core AAR (for com.facebook.react:react-android)
                 maven { url = uri("$rootDir/../node_modules/react-native/android") }
-                // JSC AAR
+
+                // JSC AAR, if you’re using JSC
                 maven { url = uri("$rootDir/../node_modules/jsc-android/android") }
+        }
+
+        resolutionStrategy {
+                eachPlugin {
+                        if (requested.id.id == "com.facebook.react") {
+                                // point to the source under node_modules
+                                useModule("com.facebook.react:react-native-gradle-plugin:0.0.0")
+                        }
+                }
         }
 }
 

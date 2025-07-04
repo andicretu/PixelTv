@@ -1,19 +1,41 @@
 buildscript {
     ext {
-        buildToolsVersion    = "33.0.0"
-        minSdkVersion        = 21
-        compileSdkVersion    = 34
-        targetSdkVersion     = 34
+        buildToolsVersion = "33.0.0"
+        minSdkVersion     = 21
+        compileSdkVersion = 34
+        targetSdkVersion  = 34
     }
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        // Android Gradle Plugin matching compileSdkVersion 34
-        classpath("com.android.tools.build:gradle:8.1.1")
-        // (Optional) if you use Google services
-        classpath("com.google.gms:google-services:4.3.10")
+        // Android Gradle Plugin that supports compileSdkVersion 34
+        classpath "com.android.tools.build:gradle:8.1.1"
+        // Bring in Kotlin Gradle plugin so submodules can use Kotlin
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22"
+        // (Optional) Google services if you need it
+        classpath "com.google.gms:google-services:4.3.10"
     }
 }
 
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        mavenLocal()
+        // Pull React Native core AARs from node_modules
+        maven { url = uri("$rootDir/../node_modules/react-native/android") }
+        // Pull JSC AAR from jsc-android in node_modules
+        maven { url = uri("$rootDir/../node_modules/jsc-android/android") }
+    }
+}
+
+// Make sure any Kotlin-Android subproject (including WebView) targets JVM 1.8
+subprojects { proj ->
+    proj.plugins.withId("org.jetbrains.kotlin.android") {
+        proj.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+            kotlinOptions.jvmTarget = "1.8"
+        }
+    }
+}
