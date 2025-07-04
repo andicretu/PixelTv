@@ -18,12 +18,7 @@ import {
   ListRenderItem,
 } from 'react-native';
 
-const videoApiUrl = Platform.OS === 'android'
-  // Android emulator → your laptop’s localhost on port 3000 over HTTP
-  ? 'http://10.0.2.2:3000/api/videos/latest'
-  // iOS simulator and real devices (in __DEV__, if you’re using Fly API)
-  : 'https://pixeltv-api.fly.dev/api/videos/latest';
-
+const videoApiUrl = 'https://pixeltv-api.fly.dev/api/videos/latest';
 
 const fetchVideos = async (): Promise<Video[]> => {
   const res = await fetch(videoApiUrl);

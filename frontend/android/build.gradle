@@ -1,17 +1,16 @@
 buildscript {
     ext {
-        kotlinVersion = "1.9.22"
         buildToolsVersion    = "33.0.0"
         minSdkVersion        = 21
-        compileSdkVersion    = 33
-        targetSdkVersion     = 33
+        compileSdkVersion    = 34
+        targetSdkVersion     = 34
     }
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:7.4.2")
+        classpath("com.android.tools.build:gradle:8.1.1")
         classpath("com.google.gms:google-services:4.3.10")
     }
 }
@@ -20,10 +19,20 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        maven { url 'https://www.jitpack.io' }
-        // Local Maven repo from jsc-android
-        maven {
-            url("$rootDir/../node_modules/jsc-android/android")
+        mavenLocal()
+        // React Native core AAR
+        maven { url("$rootDir/../node_modules/react-native/android") }
+        // JSC AAR for JavaScriptCore
+        maven { url("$rootDir/../node_modules/jsc-android/android") }
+    }
+}
+
+subprojects { project ->
+    project.plugins.withId("org.jetbrains.kotlin.android") {
+        project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+            kotlinOptions {
+                jvmTarget = "1.8"
+            }
         }
     }
 }

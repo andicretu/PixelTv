@@ -10,6 +10,11 @@ android {
     namespace "com.pixeltv"
     compileSdkVersion rootProject.ext.compileSdkVersion
 
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
     sourceSets {
         main {
             // ensure JNI libs from Hermes are included
@@ -19,7 +24,7 @@ android {
     }
 
     packagingOptions {
-        pickFirst "**/libc++_shared.so"
+        pickFirst "lib/**/libc++_shared.so"
     }
 
     defaultConfig {
@@ -52,10 +57,11 @@ android {
 }
 
 dependencies {
-    implementation("com.facebook.react:react-android:0.71.10")
+    implementation("com.facebook.react:react-android:0.73.5")
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation("org.webkit:android-jsc:r216113")
+    implementation project(":react-native-webview")
 }
 
 configurations.all {
