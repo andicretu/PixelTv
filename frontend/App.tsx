@@ -21,6 +21,57 @@ import {
 const videoApiUrl = 'https://pixeltv-api.fly.dev/api/videos/latest';
 
 const fetchVideos = async (): Promise<Video[]> => {
+  try {
+    console.log('Starting fetch from:', videoApiUrl);
+
+    const res = await fetch(videoApiUrl);
+
+    console.log('Response status:', res.status);
+    console.log('Response ok:', res.ok);
+    console.log('Response headers:', JSON.stringify([...res.headers.entries()]));
+
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status} - ${res.statusText}`);
+    }
+
+    const data = await res.json();
+    console.log('Fetched data length:', data.length);
+    console.log('Sample data:', data.slice(0, 2)); // Log first 2 items
+
+    const mappedVideos = data.map((video: any, index: number) => {
+      const matchedRule = bannerRules.find(rule => rule.condition(video, index));
+
+      return {
+        videoId: video.vimeoId,
+        title: video.title,
+        category: video.category,
+        description: '',     // placeholder
+        views: video.views.toString(),
+        uploadDate: video.uploadDate,
+        banner: matchedRule?.banner || null,
+      };
+    });
+
+    console.log('Successfully mapped videos:', mappedVideos.length);
+    return mappedVideos;
+
+  } catch (error) {
+    console.error('Detailed fetch error:', error);
+    console.error('Error message:', error.message);
+    console.error('Error name:', error.name);
+    console.error('Error stack:', error.stack);
+
+    // Additional error context
+    if (error instanceof TypeError) {
+      console.error('This is a TypeError - likely network connectivity issue');
+    }
+
+    // Re-throw the error so your UI can handle it
+    throw error;
+  }
+};
+
+/*const fetchVideos = async (): Promise<Video[]> => {
   const res = await fetch(videoApiUrl);
   const data = await res.json();
 
@@ -37,7 +88,7 @@ const fetchVideos = async (): Promise<Video[]> => {
       banner: matchedRule?.banner || null,
     };
   });
-};
+};*/
 
 
 // Type definitions

@@ -79,6 +79,7 @@ dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
     // JSC AAR
     implementation "org.webkit:android-jsc:r216113"
+    implementation 'org.jetbrains:annotations:16.0.2'
 }
 
 configurations.all {
