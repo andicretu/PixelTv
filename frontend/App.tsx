@@ -1,22 +1,31 @@
-import React, {useState, useEffect, useCallback, useMemo, memo} from 'react';
-import logoImage from './assets/images/logo.png';
-import {bannerRules} from './data/banners';
-import {Platform, View, Text} from 'react-native';
-import WebView, { WebViewMessageEvent } from 'react-native-webview';
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  memo
+} from 'react';
 import {
-  FlatList,
-  TouchableOpacity,
+  View,
+  Text,
   StyleSheet,
-  SafeAreaView,
-  Dimensions,
+  TouchableOpacity,
   Image,
   Linking,
+  Dimensions,
+  SafeAreaView,
   StatusBar,
-  RefreshControl,
-  ListRenderItem,
+  FlatList,
+  RefreshControl
 } from 'react-native';
+import WebView from 'react-native-webview';
+import logoImage from './assets/images/logo.png';
+import { bannerRules } from './data/banners';
+
 
 const videoApiUrl = 'https://pixeltv-api.fly.dev/api/videos/latest';
+export const API_BASE = 'https://pixeltv-api.fly.dev/api/videos';
+
 
 const fetchVideos = async (): Promise<Video[]> => {
   try {
@@ -31,11 +40,12 @@ const fetchVideos = async (): Promise<Video[]> => {
       const matchedRule = bannerRules.find(rule => rule.condition(video, index));
 
       return {
+        id: video.id,
         videoId: video.vimeoId,
         title: video.title,
         category: video.category,
         description: '',     // placeholder
-        views: video.views.toString(),
+        views: video.views,
         uploadDate: video.uploadDate,
         banner: matchedRule?.banner || null,
       };
@@ -63,11 +73,12 @@ interface Banner {
 }
 
 interface Video {
+  id: number;
   videoId: string;
   title: string;
   category: string;
   description: string;
-  views: string;
+  views: number;
   uploadDate: string;
   banner?: Banner | null;
 }
@@ -85,7 +96,7 @@ interface HeaderTabsProps {
 }
 
 interface VideoBlockProps {
-  video: { id: number; videoId: string; views: number; banner?: { link?: string } };
+  video: Video;
   isLiked: boolean;
   onToggleLike: () => void;
 }
@@ -148,75 +159,92 @@ const HeaderTabs: React.FC<HeaderTabsProps> = ({
 };
 
 // Enhanced Video Block with better metadata display
-const VideoBlock: React.FC<VideoBlockProps> = React.memo(({ video, isLiked, onToggleLike }) => {
-  // 1) Track the latest views count
-  const [views, setViews] = useState<number>(video.views);
-  // 2) Ensure we only count on the first play
-  const [hasCounted, setHasCounted] = useState<boolean>(false);
+const VideoBlock: React.FC<VideoBlockProps> = memo(
+  ({ video, isLiked, onToggleLike }) => {
+    const [views, setViews] = useState<number>(video.views);
+    const [hasCounted, setHasCounted] = useState<boolean>(false);
+    //const [debugMsgs, setDebugMsgs] = useState<string[]>([]); //to be active for debugging
 
-  // 3) Bump counter on first play only
-  const handlePlay = useCallback(() => {
-    console.log('[handlePlay] called, hasCounted=', hasCounted);
-    if (hasCounted) {
-      console.log('[handlePlay] already counted, skipping');
-      return;
-    }
-    setHasCounted(true);
-    console.log(`[handlePlay] counting view for video ${video.id}`);
+    // Called when we get a postMessage from the WebView
+    const onMessage = useCallback(
+      e => {
+        const msg = e.nativeEvent.data;
+        //setDebugMsgs(msgs => [msg, ...msgs]); //to be active for debugging
 
-    fetch(`${API_BASE}/videos/${video.id}/view`, { method: 'POST' })
-      .then(res => {
-        console.log('[fetch] status:', res.status);
-        return res.json();
-      })
-      .then(json => {
-        console.log('[fetch] response JSON:', json);
-        setViews(json.views);
-      })
-      .catch(error => {
-        console.error('[fetch] error counting view:', error);
-      });
-  }, [video.id, hasCounted]);
+        if (msg === 'video-played') {
+          if (!hasCounted) {
+            setHasCounted(true);
+            console.log(`[handlePlay] counting view for video ${video.id}`);
+            fetch(`${API_BASE}/${video.id}/view`, {
+              method: 'POST'
+            })
+              .then(res => {
+                console.log('[fetch] status:', res.status);
+                return res.json();
+              })
+              .then(json => {
+                console.log('[fetch] response JSON:', json);
+                setViews(json.views);
+              })
+              .catch(error => {
+                console.error('[fetch] error counting view:', error);
+              });
+          } else {
+            console.log('[handlePlay] already counted, skipping');
+          }
+        }
+      },
+      [video.id, hasCounted]
+    );
 
-  // 4) Inject Vimeo Player API and listen for 'play'
-  const injectedJS = `
-    (function() {
-      var script = document.createElement('script');
-      script.src = 'https://player.vimeo.com/api/player.js';
-      script.onload = function() {
-        var iframe = document.querySelector('iframe');
-        if (!iframe) return;
-        var player = new Vimeo.Player(iframe);
-        player.on('play', function() {
-          window.ReactNativeWebView.postMessage('video-played');
-        });
-      };
-      document.head.appendChild(script);
-    })();
-    true;
-  `;
+    // Our self-hosted HTML + iframe + SDK
+    const html = `
+    <!DOCTYPE html>
+    <html
+      style="
+        width:100%;
+        height:100%;
+        margin:0;
+        padding:0;
+        box-sizing:border-box;
+      "
+    >
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+        <style>
+          *, *::before, *::after { box-sizing: border-box; }
+          body { margin:0; padding:0; width:100%; height:100%; }
+          #player { width:100%; height:100%; border:none; }
+        </style>
+      </head>
+      <body>
+        <iframe
+          id="player"
+          src="https://player.vimeo.com/video/${video.videoId}?autoplay=0&muted=1&controls=1&playsinline=1"
+          allow="autoplay; fullscreen"
+          allowfullscreen
+        ></iframe>
+        <script src="https://player.vimeo.com/api/player.js"></script>
+        <script>
+          window.ReactNativeWebView.postMessage('html-loaded');
+          var player = new Vimeo.Player(document.getElementById('player'));
+          player.on('play', function() {
+            window.ReactNativeWebView.postMessage('video-played');
+          });
+        </script>
+      </body>
+    </html>
+    `;
 
-  // 5) Handle messages from WebView
-  const onMessage = (event: WebViewMessageEvent) => {
-    console.log('[WebView onMessage] data:', event.nativeEvent.data);
-    if (event.nativeEvent.data === 'video-played') {
-      handlePlay();
-    }
-  };
-
-  const vimeoUrl = `https://player.vimeo.com/video/${video.videoId}` +
-                   `?autoplay=0&muted=1&controls=1&playsinline=1&title=0&byline=0&portrait=0`;
-
-
-  const handleBannerPress = async (): Promise<void> => {
-    if (video.banner?.link) {
-      try {
-        await Linking.openURL(video.banner.link);
-      } catch (error) {
-        console.error('Failed to open URL:', error);
+    const handleBannerPress = async () => {
+      if (video.banner?.link) {
+        try {
+          await Linking.openURL(video.banner.link);
+        } catch (err) {
+          console.error('Failed to open banner URL:', err);
+        }
       }
-    }
-  };
+    };
 
   const renderLoadingComponent = (): JSX.Element => (
     <View style={styles.loadingContainer}>
@@ -230,26 +258,26 @@ const VideoBlock: React.FC<VideoBlockProps> = React.memo(({ video, isLiked, onTo
       {/* Vimeo Player */}
       <View style={styles.playerContainer}>
         <WebView
-          source={{uri: vimeoUrl}}
+          onMessage={onMessage}
+          originWhitelist={['*']}
+          source={{ html }}
           style={styles.webView}
-          allowsFullscreenVideo={true}
+          allowsFullscreenVideo
           mediaPlaybackRequiresUserAction={false}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
-          startInLoadingState={true}
+          javaScriptEnabled
+          domStorageEnabled
+          startInLoadingState
           renderLoading={renderLoadingComponent}
           androidHardwareAccelerationDisabled={false}
-          originWhitelist={['*']}
           onShouldStartLoadWithRequest={() => true}
-          pointerEvents="auto" // <- explicitly allow touch
-          injectedJavaScript={injectedJS}
-          onMessage={onMessage}
+          pointerEvents="auto"
         />
       </View>
+
       {/* Video Information */}
       <View style={styles.contentContainer}>
-         {/* Title and Category */}
-         <View style={styles.titleContainer}>
+        {/* Title and Category */}
+        <View style={styles.titleContainer}>
           <Text style={styles.videoTitle} numberOfLines={2}>
             {video.title}
           </Text>
@@ -258,56 +286,60 @@ const VideoBlock: React.FC<VideoBlockProps> = React.memo(({ video, isLiked, onTo
           </View>
         </View>
 
-            {/* Metadata */}
-            <View style={styles.metadataContainer}>
-              <Text style={styles.metadataText}>{views} visninger</Text>
-              <Text style={styles.metadataDot}>•</Text>
-              <Text style={styles.metadataText}>
-                {new Date(video.uploadDate).toLocaleDateString()}
-              </Text>
-            </View>
-
-            {/* Description */}
-            <Text style={styles.videoDescription} numberOfLines={3}>
-              {video.description}
-            </Text>
-
-            {/* Like Button */}
-            <TouchableOpacity
-              style={styles.likeButton}
-              onPress={onToggleLike}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.likeButtonText, isLiked && styles.liked]}>
-                {isLiked ? '♥ Liked' : '♡ Like'}
-              </Text>
-            </TouchableOpacity>
-
-            {/* Optional Banner */}
-            {video.banner && (
-              <TouchableOpacity
-                style={styles.bannerContainer}
-                onPress={handleBannerPress}
-                activeOpacity={0.9}>
-                <Image
-                  source={video.banner.image}
-                  style={styles.bannerImage}
-                  resizeMode="cover"
-                />
-                <View style={styles.bannerOverlay}>
-                  <Text style={styles.bannerText}>Sponsored Content</Text>
-                </View>
-              </TouchableOpacity>
-            )}
-          </View>
+        {/* Metadata and Debug Panel */}
+        <View style={styles.metadataContainer}>
+          <Text style={styles.metadataText}>{views} visninger</Text>
+          <Text style={styles.metadataDot}>•</Text>
+          <Text style={styles.metadataText}>
+            {new Date(video.uploadDate).toLocaleDateString()}
+          </Text>
         </View>
-      );
 
-    },
-  (prevProps, nextProps) =>
-    prevProps.video.videoId === nextProps.video.videoId &&
-    prevProps.isLiked === nextProps.isLiked
-);
+        {/*<View style={styles.debugContainer}>
+          {debugMsgs.map((m, i) => (
+            <Text key={i} style={styles.debugText}>
+              {m}
+            </Text>
+          ))}
+        </View> // to be active for debugging */}
+
+        {/* Description */}
+        <Text style={styles.videoDescription} numberOfLines={3}>
+          {video.description}
+        </Text>
+
+        {/* Like Button */}
+        <TouchableOpacity
+          style={styles.likeButton}
+          onPress={onToggleLike}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.likeButtonText, isLiked && styles.liked]}>
+            {isLiked ? '♥ Liked' : '♡ Like'}
+          </Text>
+        </TouchableOpacity>
+
+        {/* Optional Banner */}
+        {video.banner && (
+          <TouchableOpacity
+            style={styles.bannerContainer}
+            onPress={handleBannerPress}
+            activeOpacity={0.9}
+          >
+            <Image
+              source={video.banner.image}
+              style={styles.bannerImage}
+              resizeMode="cover"
+            />
+            <View style={styles.bannerOverlay}>
+              <Text style={styles.bannerText}>Sponsored Content</Text>
+            </View>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+});
 
 // Enhanced Video Feed with pull-to-refresh
 const ScrollableVideoFeed: React.FC<ScrollableVideoFeedProps> = ({
@@ -640,7 +672,15 @@ const styles = StyleSheet.create({
       marginTop: 8,
       fontSize: 14
   },
-
+  debugContainer: {
+    maxHeight: 100,
+    backgroundColor: '#222',
+    padding: 8
+  },
+  debugText: {
+    fontSize: 10,
+    color: '#0f0'
+  },
 });
 
 export default App;
