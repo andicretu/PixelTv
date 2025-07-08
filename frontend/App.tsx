@@ -1,11 +1,9 @@
-import React, {useState, useEffect, useCallback, useMemo} from 'react';
+import React, {useState, useEffect, useCallback, useMemo, memo} from 'react';
 import logoImage from './assets/images/logo.png';
 import {bannerRules} from './data/banners';
-import {Platform} from 'react-native';
-import { WebView } from 'react-native-webview';
+import {Platform, View, Text} from 'react-native';
+import WebView, { WebViewMessageEvent } from 'react-native-webview';
 import {
-  View,
-  Text,
   FlatList,
   TouchableOpacity,
   StyleSheet,
@@ -22,23 +20,14 @@ const videoApiUrl = 'https://pixeltv-api.fly.dev/api/videos/latest';
 
 const fetchVideos = async (): Promise<Video[]> => {
   try {
-    console.log('Starting fetch from:', videoApiUrl);
-
     const res = await fetch(videoApiUrl);
-
-    console.log('Response status:', res.status);
-    console.log('Response ok:', res.ok);
-    console.log('Response headers:', JSON.stringify([...res.headers.entries()]));
 
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status} - ${res.statusText}`);
     }
-
     const data = await res.json();
-    console.log('Fetched data length:', data.length);
-    console.log('Sample data:', data.slice(0, 2)); // Log first 2 items
-
     const mappedVideos = data.map((video: any, index: number) => {
+
       const matchedRule = bannerRules.find(rule => rule.condition(video, index));
 
       return {
@@ -52,44 +41,20 @@ const fetchVideos = async (): Promise<Video[]> => {
       };
     });
 
-    console.log('Successfully mapped videos:', mappedVideos.length);
     return mappedVideos;
 
   } catch (error) {
     console.error('Detailed fetch error:', error);
     console.error('Error message:', error.message);
-    console.error('Error name:', error.name);
-    console.error('Error stack:', error.stack);
 
     // Additional error context
     if (error instanceof TypeError) {
       console.error('This is a TypeError - likely network connectivity issue');
     }
-
     // Re-throw the error so your UI can handle it
     throw error;
   }
 };
-
-/*const fetchVideos = async (): Promise<Video[]> => {
-  const res = await fetch(videoApiUrl);
-  const data = await res.json();
-
-  return data.map((video: any, index: number) => {
-    const matchedRule = bannerRules.find(rule => rule.condition(video, index));
-
-    return {
-      videoId: video.vimeoId,
-      title: video.title,
-      category: video.category,
-      description: '',     // placeholder
-      views: video.views.toString(),
-      uploadDate: video.uploadDate,
-      banner: matchedRule?.banner || null,
-    };
-  });
-};*/
-
 
 // Type definitions
 interface Banner {
@@ -120,7 +85,7 @@ interface HeaderTabsProps {
 }
 
 interface VideoBlockProps {
-  video: Video;
+  video: { id: number; videoId: string; views: number; banner?: { link?: string } };
   isLiked: boolean;
   onToggleLike: () => void;
 }
@@ -183,58 +148,119 @@ const HeaderTabs: React.FC<HeaderTabsProps> = ({
 };
 
 // Enhanced Video Block with better metadata display
-const VideoBlock: React.FC<VideoBlockProps> = React.memo(
-    ({video, isLiked, onToggleLike}) => {
-      const vimeoUrl: string = `https://player.vimeo.com/video/${video.videoId}?autoplay=0&muted=1&controls=1&playsinline=1&title=0&byline=0&portrait=0`;
+const VideoBlock: React.FC<VideoBlockProps> = React.memo(({ video, isLiked, onToggleLike }) => {
+  // 1) Track the latest views count
+  const [views, setViews] = useState<number>(video.views);
+  // 2) Ensure we only count on the first play
+  const [hasCounted, setHasCounted] = useState<boolean>(false);
 
-      const handleBannerPress = async (): Promise<void> => {
-        if (video.banner?.link) {
-          try {
-            await Linking.openURL(video.banner.link);
-          } catch (error) {
-            console.error('Failed to open URL:', error);
-          }
-        }
+  // 3) Bump counter on first play only
+  const handlePlay = useCallback(() => {
+    console.log('[handlePlay] called, hasCounted=', hasCounted);
+    if (hasCounted) {
+      console.log('[handlePlay] already counted, skipping');
+      return;
+    }
+    setHasCounted(true);
+    console.log(`[handlePlay] counting view for video ${video.id}`);
+
+    fetch(`${API_BASE}/videos/${video.id}/view`, { method: 'POST' })
+      .then(res => {
+        console.log('[fetch] status:', res.status);
+        return res.json();
+      })
+      .then(json => {
+        console.log('[fetch] response JSON:', json);
+        setViews(json.views);
+      })
+      .catch(error => {
+        console.error('[fetch] error counting view:', error);
+      });
+  }, [video.id, hasCounted]);
+
+  // 4) Inject Vimeo Player API and listen for 'play'
+  const injectedJS = `
+    (function() {
+      var script = document.createElement('script');
+      script.src = 'https://player.vimeo.com/api/player.js';
+      script.onload = function() {
+        var iframe = document.querySelector('iframe');
+        if (!iframe) return;
+        var player = new Vimeo.Player(iframe);
+        player.on('play', function() {
+          window.ReactNativeWebView.postMessage('video-played');
+        });
       };
+      document.head.appendChild(script);
+    })();
+    true;
+  `;
 
-      const renderLoadingComponent = (): JSX.Element => (
-        <View style={styles.loadingContainer}>
-          <View style={styles.loadingSpinner} />
-          <Text style={styles.loadingText}>Loading video...</Text>
-        </View>
-      );
+  // 5) Handle messages from WebView
+  const onMessage = (event: WebViewMessageEvent) => {
+    console.log('[WebView onMessage] data:', event.nativeEvent.data);
+    if (event.nativeEvent.data === 'video-played') {
+      handlePlay();
+    }
+  };
 
-      return (
-        <View style={styles.videoBlock}>
-          {/* Vimeo Player */}
-          <View style={styles.playerContainer}>
-            <WebView
-              source={{uri: vimeoUrl}}
-              style={styles.webView}
-              allowsFullscreenVideo={true}
-              mediaPlaybackRequiresUserAction={false}
-              javaScriptEnabled={true}
-              domStorageEnabled={true}
-              startInLoadingState={true}
-              renderLoading={renderLoadingComponent}
-            />
+  const vimeoUrl = `https://player.vimeo.com/video/${video.videoId}` +
+                   `?autoplay=0&muted=1&controls=1&playsinline=1&title=0&byline=0&portrait=0`;
+
+
+  const handleBannerPress = async (): Promise<void> => {
+    if (video.banner?.link) {
+      try {
+        await Linking.openURL(video.banner.link);
+      } catch (error) {
+        console.error('Failed to open URL:', error);
+      }
+    }
+  };
+
+  const renderLoadingComponent = (): JSX.Element => (
+    <View style={styles.loadingContainer}>
+      <View style={styles.loadingSpinner} />
+      <Text style={styles.loadingText}>Loading video...</Text>
+    </View>
+  );
+
+  return (
+    <View style={styles.videoBlock}>
+      {/* Vimeo Player */}
+      <View style={styles.playerContainer}>
+        <WebView
+          source={{uri: vimeoUrl}}
+          style={styles.webView}
+          allowsFullscreenVideo={true}
+          mediaPlaybackRequiresUserAction={false}
+          javaScriptEnabled={true}
+          domStorageEnabled={true}
+          startInLoadingState={true}
+          renderLoading={renderLoadingComponent}
+          androidHardwareAccelerationDisabled={false}
+          originWhitelist={['*']}
+          onShouldStartLoadWithRequest={() => true}
+          pointerEvents="auto" // <- explicitly allow touch
+          injectedJavaScript={injectedJS}
+          onMessage={onMessage}
+        />
+      </View>
+      {/* Video Information */}
+      <View style={styles.contentContainer}>
+         {/* Title and Category */}
+         <View style={styles.titleContainer}>
+          <Text style={styles.videoTitle} numberOfLines={2}>
+            {video.title}
+          </Text>
+          <View style={styles.categoryBadge}>
+            <Text style={styles.categoryText}>{video.category}</Text>
           </View>
-
-          {/* Video Information */}
-          <View style={styles.contentContainer}>
-            {/* Title and Category */}
-            <View style={styles.titleContainer}>
-              <Text style={styles.videoTitle} numberOfLines={2}>
-                {video.title}
-              </Text>
-              <View style={styles.categoryBadge}>
-                <Text style={styles.categoryText}>{video.category}</Text>
-              </View>
-            </View>
+        </View>
 
             {/* Metadata */}
             <View style={styles.metadataContainer}>
-              <Text style={styles.metadataText}>{video.views} visninger</Text>
+              <Text style={styles.metadataText}>{views} visninger</Text>
               <Text style={styles.metadataDot}>•</Text>
               <Text style={styles.metadataText}>
                 {new Date(video.uploadDate).toLocaleDateString()}
@@ -483,7 +509,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     backgroundColor: '#1a1a1a',
     borderRadius: 12,
-    overflow: 'hidden',
+    overflow: 'visible',
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
@@ -491,11 +517,11 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
   },
   playerContainer: {
-    width: SCREEN_WIDTH,        // full device width
+    width: '100%',              // full device width
     aspectRatio: 16 / 9,        // or whatever aspect your videos are
     backgroundColor: '#000000',
     position: 'relative',
-    overflow: 'hidden',
+    overflow: 'visible',
     borderRadius: 12,
   },
   webView: {
@@ -609,6 +635,10 @@ const styles = StyleSheet.create({
   },
   liked: {
     color: '#ff4444',
+  },
+  view: {
+      marginTop: 8,
+      fontSize: 14
   },
 
 });

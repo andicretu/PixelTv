@@ -88,5 +88,36 @@ configurations.all {
     }
 }
 
+afterEvaluate {
+    // Ensure bundleReleaseJsAndAssets waits for the webview’s resources
+    tasks.matching { it.name == "bundleReleaseJsAndAssets" }.configureEach {
+        dependsOn(":react-native-webview:generateReleaseBuildConfig")
+        dependsOn(":react-native-webview:packageReleaseResources")
+        dependsOn(":react-native-webview:processReleaseManifest")
+        dependsOn(":react-native-webview:writeReleaseAarMetadata")
+        dependsOn(":react-native-webview:javaPreCompileRelease")
+        dependsOn(":react-native-webview:generateReleaseRFile")
+        dependsOn(":react-native-webview:mergeReleaseJniLibFolders")
+        dependsOn(":react-native-webview:mergeReleaseShaders")
+        dependsOn(":react-native-webview:copyReleaseJniLibsProjectAndLocalJars")
+        dependsOn(":react-native-webview:packageReleaseAssets")
+        dependsOn(":react-native-webview:prepareReleaseArtProfile")
+        dependsOn(":react-native-webview:prepareLintJarForPublish")
+        dependsOn(":react-native-webview:extractDeepLinksForAarRelease")
+        dependsOn(":react-native-webview:compileReleaseKotlin")
+        dependsOn(":react-native-webview:compileReleaseJavaWithJavac")
+        dependsOn(":react-native-webview:extractReleaseAnnotations")
+        dependsOn(":react-native-webview:mergeReleaseGeneratedProguardFiles")
+        dependsOn(":react-native-webview:mergeReleaseJavaResource")
+        dependsOn(":react-native-webview:processReleaseJavaRes")
+        dependsOn(":react-native-webview:syncReleaseLibJars")
+        dependsOn(":react-native-webview:mergeReleaseConsumerProguardFiles")
+        dependsOn(":react-native-webview:bundleReleaseLocalLintAar")
+    }
+
+    tasks.matching { it.name == "compressReleaseAssets" }.configureEach {
+        mustRunAfter("copyReleaseBundledJs")
+    }
+}
 // Run the RN bundling step
 apply from: "../../node_modules/react-native/react.gradle"
