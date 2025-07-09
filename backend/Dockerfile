@@ -22,8 +22,8 @@ RUN apt-get update -qq && \
 
 # Install node modules (including dev for Prisma CLI)
 COPY package-lock.json package.json ./
-ENV NODE_ENV=development
-RUN npm ci --include=dev
+ENV NODE_ENV=production
+RUN npm ci --omit=dev
 
 # Generate Prisma Client
 COPY prisma ./prisma

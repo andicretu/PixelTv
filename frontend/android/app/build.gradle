@@ -7,7 +7,7 @@ plugins {
 
 project.ext.react = [
         entryFile: "index.js",
-        enableHermes: false  // using JSC, so no libhermes.so needed
+        enableHermes: false
 ]
 
 android {
@@ -73,7 +73,7 @@ android {
 dependencies {
     // React Native runtime AAR from Maven Central
     implementation "com.facebook.react:react-android:0.73.5"
-    // Your autolinked WebView module
+    // autolinked WebView module
     implementation project(":react-native-webview")
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation fileTree(dir: "libs", include: ["*.jar"])
@@ -89,7 +89,7 @@ configurations.all {
 }
 
 afterEvaluate {
-    // Ensure bundleReleaseJsAndAssets waits for the webview’s resources
+    // bundleReleaseJsAndAssets waits for the webview’s resources
     tasks.matching { it.name == "bundleReleaseJsAndAssets" }.configureEach {
         dependsOn(":react-native-webview:generateReleaseBuildConfig")
         dependsOn(":react-native-webview:packageReleaseResources")

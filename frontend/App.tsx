@@ -197,7 +197,7 @@ const VideoBlock: React.FC<VideoBlockProps> = memo(
       [video.id, hasCounted]
     );
 
-    // Our self-hosted HTML + iframe + SDK
+    // self-hosted HTML + iframe + SDK
     const html = `
     <!DOCTYPE html>
     <html
@@ -550,7 +550,7 @@ const styles = StyleSheet.create({
   },
   playerContainer: {
     width: '100%',              // full device width
-    aspectRatio: 16 / 9,        // or whatever aspect your videos are
+    aspectRatio: 16 / 9,
     backgroundColor: '#000000',
     position: 'relative',
     overflow: 'visible',
@@ -663,7 +663,7 @@ const styles = StyleSheet.create({
   likeButtonText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#ffffff', // ← this ensures the default text and symbol are white
+    color: '#ffffff', // the default text and symbol are white
   },
   liked: {
     color: '#ff4444',
