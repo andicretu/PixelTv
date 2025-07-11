@@ -79,3 +79,4 @@ backend/node_modules/
 # Env files
 backend/.env
 
+frontend/android/bugreport/*.txt
